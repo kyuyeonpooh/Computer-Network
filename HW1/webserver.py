@@ -40,7 +40,7 @@ class SimpleServer:
 
                 # send header and the file content
                 self.__conn_socket.send(self.get_header(file_name, status_code).encode())
-                if file is not None:
+                if status_code == 200:
                     self.__conn_socket.send(file.read())
                 else:
                     self.__conn_socket.send("404 Not Found".encode())
