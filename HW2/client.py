@@ -183,7 +183,7 @@ if __name__ == "__main__":
     user_id = input()
     print_yellow_inline("Enter RelayServer IP address: ")
     ip_addr = input()
-    client = RelayClient(user_id, 10081, ip_addr)
+    client = RelayClient(user_id, 10080, ip_addr)
     client.init_socket()
     client.start()
 

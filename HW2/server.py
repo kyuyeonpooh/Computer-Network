@@ -7,6 +7,7 @@ from message import *
 import pickle
 from colors import *
 
+
 class RelayServer:
 
     def __init__(self, port, host_addr):
@@ -122,7 +123,7 @@ class RelayServer:
                                     self.__file_list.remove(f)
                             print_blue(user_left + " has left.")
                             self.notify_all(user_left + " has left.")
-                            print_cyan("The global file list is as follows:")
+                            print_cyan("The global file list is as follows:") # print file list
                             print("  " + "\n  ".join(self.__file_list))
                             self.notify_all("The global file list is updated.")
                             sock.close()
@@ -142,7 +143,10 @@ class RelayServer:
             cur_size += len(data)
         print_yellow("The transfer of " + file_name + " to " + self.__user_id_map[recv_soc]
                 + " has been completed.")
-
+        self.__file_list.append(self.__user_id_map[recv_soc] + "/" + file_name)
+        print_cyan("The global file list is as follows:") # print file list
+        print("  " + "\n  ".join(self.__file_list))
+        self.notify_all("The global file list is updated.")
 
     # notify all users
     def notify_all(self, msg):
@@ -158,7 +162,7 @@ class RelayServer:
 
 
 if __name__ == "__main__":
-    server = RelayServer(10081, "")
+    server = RelayServer(10080, "")
     server.init_socket()
     server.start()
 
