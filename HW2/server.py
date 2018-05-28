@@ -23,7 +23,7 @@ class RelayServer:
         self.__socket = socket(AF_INET, SOCK_STREAM)
         self.__socket.bind((self.__host_addr, self.__port))
         self.__socket.listen(20)
-        self.__conn_list.append(self.__socket) # add server socket into the list
+        self.__conn_list.append(self.__socket)  # add server socket into the list
         print_yellow("RelayServer is ready for port number {}.".format(self.__port))
 
     # start communicating with clients
@@ -40,9 +40,9 @@ class RelayServer:
                     # get connection request from the client
                     if sock is self.__socket:
                         client_socket, _ = sock.accept()
-                        self.__conn_list.append(client_socket) # add to connection list
+                        self.__conn_list.append(client_socket)  # add to connection list
                         msg = Message(Message.WELCOME, "")
-                        client_socket.send(pickle.dumps(msg)) # serialize
+                        client_socket.send(pickle.dumps(msg))  # serialize
                     
                     # get message from the client
                     else:
@@ -57,12 +57,10 @@ class RelayServer:
                             # client starts to send file content
                             if msg_type == Message.FILE_SIZE:
                                 file_size = msg.get_msg() # get file size
-                                recver = sock.recv(2048).decode() # get receiver's name
-                                file_name = sock.recv(2048).decode() # get file name
-                                print(recver)
-                                print(file_name)
+                                recver = sock.recv(2048).decode()  # get receiver's name
+                                file_name = sock.recv(2048).decode()  # get file name
                                 recv_soc = None
-                                for soc, usr in self.__user_id_map.items(): # find receiver's socket
+                                for soc, usr in self.__user_id_map.items():  # find receiver's socket
                                     if usr == recver:
                                         recv_soc = soc
                                         break
@@ -76,7 +74,7 @@ class RelayServer:
                             # notify all clients about new user
                             elif msg_type == Message.WELCOME:
                                 user_id = msg.get_msg()
-                                self.__user_id_map[sock] = user_id # add to user id to map
+                                self.__user_id_map[sock] = user_id  # add to user id to map
                                 print_green(user_id + " is connected.")
                                 self.notify_all("Welcome " + user_id + "!")
                             
@@ -86,7 +84,7 @@ class RelayServer:
                                 user_id = self.__user_id_map[sock]
                                 if not user_id + "/" + reg_file in self.__file_list:
                                     self.__file_list.append(user_id + "/" + reg_file)
-                                    self.__file_list.sort() # add file to the list and sort them
+                                    self.__file_list.sort()  # add file to the list and sort them
                                     print_cyan("The global file list is as follows:")
                                     print("  " + "\n  ".join(self.__file_list))
                                     self.notify_all("The global file list is updated.")
@@ -101,7 +99,7 @@ class RelayServer:
                                 print_yellow(
                                         "Received the file download request from "
                                         + file_recver + " for " + msg.get_msg())
-                                for soc, usr in self.__user_id_map.items(): # find file sender's socket
+                                for soc, usr in self.__user_id_map.items():  # find file sender's socket
                                     if usr == file_sender:
                                         msg = Message(Message.GET_FILE, file_recver + ":" + file_name)
                                         soc.send(pickle.dumps(msg))
@@ -113,17 +111,17 @@ class RelayServer:
                                 msg = Message(Message.FILE_LIST, "  " + file_list)
                                 sock.send(pickle.dumps(msg))
 
-                        # nofity disconnected user
+                        # notify disconnected user
                         else:
                             self.__conn_list.remove(sock)
                             user_left = self.__user_id_map.pop(sock, None)
                             file_list_copied = list(self.__file_list)
-                            for f in file_list_copied: # delete file registered by user who just left
+                            for f in file_list_copied:  # delete file registered by user who just left
                                 if f.split("/", 1)[0] == user_left:
                                     self.__file_list.remove(f)
                             print_blue(user_left + " has left.")
                             self.notify_all(user_left + " has left.")
-                            print_cyan("The global file list is as follows:") # print file list
+                            print_cyan("The global file list is as follows:")  # print file list
                             print("  " + "\n  ".join(self.__file_list))
                             self.notify_all("The global file list is updated.")
                             sock.close()
@@ -144,7 +142,7 @@ class RelayServer:
         print_yellow("The transfer of " + file_name + " to " + self.__user_id_map[recv_soc]
                 + " has been completed.")
         self.__file_list.append(self.__user_id_map[recv_soc] + "/" + file_name)
-        print_cyan("The global file list is as follows:") # print file list
+        print_cyan("The global file list is as follows:")  # print file list
         print("  " + "\n  ".join(self.__file_list))
         self.notify_all("The global file list is updated.")
 
@@ -153,7 +151,7 @@ class RelayServer:
         for each_client in self.__conn_list:
             if each_client is not self.__socket:
                 notice = Message(Message.NOTICE, msg)
-                each_client.send(pickle.dumps(notice)) # serialize
+                each_client.send(pickle.dumps(notice))  # serialize
 
     # send error message to client
     def send_error_msg(self, sock, err_msg):

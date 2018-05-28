@@ -8,12 +8,16 @@ from message import *
 import pickle
 from colors import *
 
+REG_SWITCH = False
+REQ_SWITCH = False
+
 
 class RelayClient:
 
-    def __init__(self, user_id, port, host_addr):
+    def __init__(self, 
+        user_id, port, host_addr):
         self.__socket = None
-        self.__conn_list = [sys.stdin] # add stdin for non-blocking
+        self.__conn_list = [sys.stdin]  # add stdin for non-blocking
         self.__user_id = user_id
         self.__port = port
         self.__host_addr = host_addr
@@ -27,10 +31,12 @@ class RelayClient:
             print_red("Failed connecting to {}.".format(self.__host_addr))
             sys.exit(1)
         print_green("Connected to server {}.".format(self.__host_addr))
-        self.__conn_list.append(self.__socket) # add client socket into the list
+        self.__conn_list.append(self.__socket)  # add client socket into the list
 
     # start communicating with server
     def start(self):
+        global REG_SWITCH  # get global variable
+        global REQ_SWITCH
         try:
             while True:
             
@@ -57,9 +63,9 @@ class RelayClient:
                                 self.get_file(file_name, file_size, sock)
 
                             # send user id to the server
-                            if msg_type == Message.WELCOME:
+                            elif msg_type == Message.WELCOME:
                                 msg = Message(Message.WELCOME, self.__user_id)
-                                sock.send(pickle.dumps(msg)) # serialize
+                                sock.send(pickle.dumps(msg))  # serialize
 
                             # print notice message from the server
                             elif msg_type == Message.NOTICE:
@@ -70,7 +76,7 @@ class RelayClient:
                                 print_cyan("The global file list is as follows:")
                                 print(msg.get_msg())
 
-                            # other cilent wants my file
+                            # other client wants my file
                             elif msg_type == Message.GET_FILE:
                                 req = msg.get_msg()
                                 recver = req.split(":", 1)[0]
@@ -102,7 +108,19 @@ class RelayClient:
                     else:
                         try:
                             user_input = sys.stdin.readline().rstrip()
-                            user_input = int(user_input)
+                            if REG_SWITCH:
+                                if os.path.isfile(user_input):
+                                    msg = Message(Message.REG_FILE, user_input)
+                                    self.__socket.send(pickle.dumps(msg))  # serialize
+                                else:
+                                    print_red("File not found.")
+                                REG_SWITCH = False
+                            elif REQ_SWITCH:
+                                msg = Message(Message.GET_FILE, user_input)
+                                self.__socket.send(pickle.dumps(msg))
+                                REQ_SWITCH = False
+                            else:
+                                user_input = int(user_input)
                         except Exception as e:
                             print_red("Wrong input")
                         if isinstance(user_input, int):
@@ -119,12 +137,8 @@ class RelayClient:
                             # register file to server
                             elif user_input == 1:
                                 print_yellow_inline("Which file to register? ")
-                                file_name = input()
-                                if os.path.isfile(file_name):
-                                    msg = Message(Message.REG_FILE, file_name)
-                                    self.__socket.send(pickle.dumps(msg)) # serialize
-                                else:
-                                    print_red("File not found.")
+                                sys.stdout.flush()
+                                REG_SWITCH = True
                             
                             # request global file list
                             elif user_input == 2:
@@ -134,10 +148,9 @@ class RelayClient:
                             # download file from server
                             elif user_input == 3:
                                 print_yellow_inline("Which file to download? ")
-                                file_name = input()
-                                msg = Message(Message.GET_FILE, file_name)
-                                self.__socket.send(pickle.dumps(msg))
-                            
+                                sys.stdout.flush()
+                                REQ_SWITCH = True
+                                                           
                             # terminate connection and exit
                             elif user_input == 4:
                                 self.__socket.close()
@@ -171,7 +184,7 @@ class RelayClient:
         cur_size = 0
         f = open(file_name, "wb+")
         while cur_size < file_size:
-            data = sock.recv(2048)
+            data = sock.recv(min(2048, file_size - cur_size))
             f.write(data)
             cur_size += len(data)
         f.close()
