@@ -87,6 +87,6 @@ class SimpleServer:
 
 
 if __name__ == "__main__":
-    server = SimpleServer(10080, "localhost")
+    server = SimpleServer(10080, "")
     server.init_socket()
     server.serve_request()
